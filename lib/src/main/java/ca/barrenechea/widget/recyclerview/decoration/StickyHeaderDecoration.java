@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -36,13 +37,14 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
     private StickyHeaderAdapter mAdapter;
 
     private boolean mRenderInline;
+    private boolean mReverse;
 
     /**
      * @param adapter
      *         the sticky header adapter to use
      */
     public StickyHeaderDecoration(StickyHeaderAdapter adapter) {
-        this(adapter, false);
+        this(adapter, false, false);
     }
 
     /**
@@ -50,9 +52,18 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
      *         the sticky header adapter to use
      */
     public StickyHeaderDecoration(StickyHeaderAdapter adapter, boolean renderInline) {
+        this(adapter, renderInline, false);
+    }
+
+    /**
+     * @param adapter
+     *         the sticky header adapter to use
+     */
+    public StickyHeaderDecoration(StickyHeaderAdapter adapter, boolean renderInline, boolean reverse) {
         mAdapter = adapter;
         mHeaderCache = new HashMap<>();
         mRenderInline = renderInline;
+        mReverse = reverse;
     }
 
     /**
@@ -97,12 +108,28 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
     }
 
     private boolean hasHeader(int position) {
+        return mReverse?
+            hasHeaderReverse(position) :
+            hasHeaderDirect(position);
+    }
+
+    private boolean hasHeaderDirect(int position) {
         if (position == 0) {
             return true;
         }
 
         int previous = position - 1;
         return mAdapter.getHeaderId(position) != mAdapter.getHeaderId(previous);
+    }
+
+    private boolean hasHeaderReverse(int position) {
+        int lastPosition = mAdapter.getItemCount() - 1;
+        if (position == lastPosition) {
+            return true;
+        }
+
+        int next = position + 1;
+        return mAdapter.getHeaderId(position) != mAdapter.getHeaderId(next);
     }
 
     private RecyclerView.ViewHolder getHeader(RecyclerView parent, int position) {
@@ -146,7 +173,7 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
 
             final int adapterPos = parent.getChildAdapterPosition(child);
 
-            if (adapterPos != RecyclerView.NO_POSITION && (layoutPos == 0 || hasHeader(adapterPos))) {
+            if (adapterPos != RecyclerView.NO_POSITION && (layoutPos == (mReverse ? (count-1) : 0) || hasHeader(adapterPos))) {
                 View header = getHeader(parent, adapterPos).itemView;
                 c.save();
                 final int left = child.getLeft();
@@ -163,11 +190,12 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
     private int getHeaderTop(RecyclerView parent, View child, View header, int adapterPos, int layoutPos) {
         int headerHeight = getHeaderHeightForLayout(header);
         int top = ((int) child.getY()) - headerHeight;
-        if (layoutPos == 0) {
-            final int count = parent.getChildCount();
+
+        final int count = parent.getChildCount();
+        if (layoutPos == (mReverse ? (count - 1) : 0) && (!mReverse || count > 1)) {
             final long currentId = mAdapter.getHeaderId(adapterPos);
             // find next view with header and compute the offscreen push if needed
-            for (int i = 1; i < count; i++) {
+            for (int i : childIdxIterator(parent)) {
                 int adapterPosHere = parent.getChildAdapterPosition(parent.getChildAt(i));
                 if (adapterPosHere != RecyclerView.NO_POSITION) {
                     long nextId = mAdapter.getHeaderId(adapterPosHere);
@@ -191,5 +219,50 @@ public class StickyHeaderDecoration extends RecyclerView.ItemDecoration {
 
     private int getHeaderHeightForLayout(View header) {
         return mRenderInline ? 0 : header.getHeight();
+    }
+
+    private Iterable<Integer> childIdxIterator(final RecyclerView view) {
+        return  new Iterable<Integer>() {
+            @Override
+            public Iterator<Integer> iterator() {
+                return mReverse ?
+                    new Iterator<Integer>() {
+
+                        private int currentIdx = view.getChildCount() - 2;
+
+                        @Override
+                        public boolean hasNext() {
+                            return 0 <= currentIdx;
+                        }
+
+                        @Override
+                        public Integer next() {
+                            return currentIdx--;
+                        }
+
+                        @Override
+                        public void remove() {
+                        }
+                    }:
+                    new Iterator<Integer>() {
+
+                        private int currentIdx = 1;
+
+                        @Override
+                        public boolean hasNext() {
+                            return currentIdx < view.getChildCount();
+                        }
+
+                        @Override
+                        public Integer next() {
+                            return currentIdx++;
+                        }
+
+                        @Override
+                        public void remove() {
+                        }
+                    };
+            }
+        };
     }
 }

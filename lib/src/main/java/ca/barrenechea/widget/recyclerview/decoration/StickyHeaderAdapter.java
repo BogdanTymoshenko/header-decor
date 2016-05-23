@@ -48,4 +48,7 @@ public interface StickyHeaderAdapter<T extends RecyclerView.ViewHolder> {
      * @param position the header's item position
      */
     void onBindHeaderViewHolder(T viewholder, int position);
+
+
+    int getItemCount();
 }
