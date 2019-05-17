@@ -16,8 +16,9 @@
 
 package ca.barrenechea.widget.recyclerview.decoration;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
+
+import androidx.recyclerview.widget.RecyclerView;
 
 /**
  * The adapter to assist the {@link StickyHeaderDecoration} in creating and binding the header views.

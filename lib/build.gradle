@@ -18,12 +18,12 @@ apply plugin: 'com.android.library'
 //apply plugin: 'bintray-release'
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    compileSdkVersion 28
+    buildToolsVersion "28.0.3"
 
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 24
+        targetSdkVersion 28
         versionCode 1
         versionName '1.1'
     }
@@ -36,8 +36,8 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:recyclerview-v7:24.2.1'
-    compile 'com.android.support:support-annotations:24.2.1'
+    implementation 'androidx.core:core:1.0.2'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 }
 
 //apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
